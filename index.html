@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Detection System</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+      }
+      .background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #b1c0ce;
+        z-index: -1;
+      }
+      .letter {
+        position: absolute;
+        font-size: 20px;
+        opacity: 0.5;
+        animation: float 15s infinite linear;
+      }
+      @keyframes float {
+        0% {
+          transform: translateY(100vh) translateX(-50%);
+        }
+        100% {
+          transform: translateY(-100px) translateX(50%);
+        }
+      }
+      .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: rgba(50, 75, 82, 0.8);
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+      h1 {
+        color: #090a0b;
+        text-align: center;
+      }
+      h2 {
+        color: #090a0b;
+        text-align: center;
+      }
+      h2 span {
+        color: #7c3434;
+        text-align: center;
+        font-size: larger;
+        font-weight: bolder;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      button:hover {
+        background-color: #2980b9;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      button:hover::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(-100%);
+        animation: shine 1.5s infinite;
+      }
+      @keyframes shine {
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      button:disabled:hover::after {
+        display: none;
+      }
+      #result {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #e8f6f3;
+        display: none;
+      }
+      .loading {
+        text-align: center;
+        display: none;
+      }
+      .loading::after {
+        content: "...";
+        animation: dots 1s steps(5, end) infinite;
+      }
+      @keyframes dots {
+        0%,
+        20% {
+          color: rgba(0, 0, 0, 0);
+          text-shadow: 0.25em 0 0 rgba(0, 0, 0, 0), 0.5em 0 0 rgba(0, 0, 0, 0);
+        }
+        40% {
+          color: #333;
+          text-shadow: 0.25em 0 0 rgba(0, 0, 0, 0), 0.5em 0 0 rgba(0, 0, 0, 0);
+        }
+        60% {
+          text-shadow: 0.25em 0 0 #333, 0.5em 0 0 rgba(0, 0, 0, 0);
+        }
+        80%,
+        100% {
+          text-shadow: 0.25em 0 0 #333, 0.5em 0 0 #333;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background" id="background"></div>
+    <div class="container">
+      <h1>Language Detection System</h1>
+      <h2>Team ETA <span>Machine Learning</span></h2>
+      <textarea
+        id="inputText"
+        rows="5"
+        placeholder="Enter text to detect language..."
+      ></textarea>
+      <button id="detectBtn">Detect Language</button>
+      <div id="loading" class="loading">Detecting</div>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const inputText = document.getElementById("inputText");
+      const detectBtn = document.getElementById("detectBtn");
+      const loading = document.getElementById("loading");
+      const result = document.getElementById("result");
+      const background = document.getElementById("background");
+
+      const letters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ你好世界こんにちは世界";
+
+      function createFloatingLetter() {
+        const letter = document.createElement("div");
+        letter.className = "letter";
+        letter.style.left = `${Math.random() * 100}%`;
+        letter.style.animationDuration = `${15 + Math.random() * 10}s`;
+        letter.style.animationDelay = `${Math.random() * 10}s`;
+        letter.textContent =
+          letters[Math.floor(Math.random() * letters.length)];
+        background.appendChild(letter);
+
+        letter.addEventListener("animationiteration", () => {
+          letter.style.left = `${Math.random() * 100}%`;
+        });
+      }
+
+      for (let i = 0; i < 50; i++) {
+        createFloatingLetter();
+      }
+
+      detectBtn.addEventListener("click", async () => {
+        if (inputText.value.trim() === "") {
+          alert("Please enter some text.");
+          return;
+        }
+
+        loading.style.display = "block";
+        result.style.display = "none";
+        detectBtn.disabled = true;
+
+        try {
+          const response = await fetch("http://localhost:4000/api/prediction", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: inputText.value.trim() }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data = await response.json();
+          const detectedLanguage = data.prediction;
+          result.innerHTML = `<strong>Detected Language:</strong> ${detectedLanguage}`;
+          result.style.display = "block";
+        } catch (error) {
+          result.innerHTML = `<strong>Error:</strong> ${error.message}`;
+          result.style.display = "block";
+        } finally {
+          loading.style.display = "none";
+          detectBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
